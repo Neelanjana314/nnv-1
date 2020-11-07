@@ -58,7 +58,7 @@ I will update the user manual frequently.
 * [Patrick Musau](https://scholar.google.com/citations?user=C2RS3i8AAAAJ&hl=en)
 * [Diego Manzanas Lopez](https://scholar.google.com/citations?user=kgpZCIAAAAAJ&hl=en)
 * Xiaodong Yang
-* Neelanjana Pal
+* [Neelanjana Pal](https://github.com/Neelanjana314)
 * [Luan Viet Nguyen](https://luanvietnguyen.github.io)
 * [Taylor T. Johnson](http://www.taylortjohnson.com)
 
