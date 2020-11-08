@@ -34,6 +34,7 @@ classdef LayerS
         
         % Evaluation method
         function y = evaluate(obj, x)  % evaluation of this layer with a specific vector
+            % Modified: Neelanjana: 11/7/2020: added 'lrelu' 
             if size(x, 1) ~= size(obj.W, 2) || size(x, 2) ~= 1
                 error('Invalid or inconsistent input vector')
             end
@@ -55,6 +56,8 @@ classdef LayerS
                 y = y1;
             elseif strcmp(obj.f, 'softmax')
                 y = softmax(y1);
+            elseif strcmp(obj.f, 'lrelu')
+                y = LReLU.evaluate(y1, 0.01);
             end 
 
         end
@@ -87,7 +90,7 @@ classdef LayerS
             % date: 27/2/2019
             % update: 7/10/2020 add the relaxed approx-star method for poslin, logsig and tansig
             %         7/18/2020: add dis_play option + lp_solver option
-             
+            % update: 11/7/2020: added 'lrelu' by Neelanjana 
             % parse inputs 
             switch nargin
                 
@@ -130,7 +133,7 @@ classdef LayerS
                 error('Unknown reachability analysis method');
             end
             
-            if strcmp(method, 'exact-star') && (~strcmp(obj.f, 'purelin') && ~strcmp(obj.f, 'poslin') && ~strcmp(obj.f, 'satlin') && ~strcmp(obj.f, 'satlins'))
+            if strcmp(method, 'exact-star') && (~strcmp(obj.f, 'lrelu') && (~strcmp(obj.f, 'purelin') && ~strcmp(obj.f, 'poslin') && ~strcmp(obj.f, 'satlin') && ~strcmp(obj.f, 'satlins'))
                 method = 'approx-star';
                 fprintf('\nThe current layer has %s activation function -> cannot compute exact reachable set for the current layer, we use approx-star method instead', obj.f);
             end
@@ -159,6 +162,8 @@ classdef LayerS
                         S = [S I1];
                     elseif strcmp(f1, 'poslin')
                         S = [S PosLin.reach(I1, method, [], rF, dis, lps)];
+                    elseif strcmp(f1, 'lrelu')
+                        S = [S LReLU.reach(I1, method, [], rF, dis, lps)];
                     elseif strcmp(f1, 'satlin')
                         S = [S SatLin.reach(I1, method)];
                     elseif strcmp(f1, 'satlins')
@@ -191,6 +196,8 @@ classdef LayerS
                         S = [S I1];
                     elseif strcmp(f1, 'poslin')
                         S = [S PosLin.reach(I1, method, [], obj.relaxFactor, obj.dis_opt, obj.lp_solver)];
+                    elseif strcmp(f1, 'lrelu')
+                        S = [S LReLU.reach(I1, method, [], obj.relaxFactor, obj.dis_opt, obj.lp_solver)];
                     elseif strcmp(f1, 'satlin')
                         S = [S SatLin.reach(I1, method)];
                     elseif strcmp(f1, 'satlins')
@@ -229,6 +236,7 @@ classdef LayerS
             
             % author: Dung Tran
             % date: 1/18/2020
+            % Modified: Neelanjana 11/7/2020 : added 'lrelu'
             
             O1 = Operation('AffineMap', obj.W, obj.b);
             
@@ -246,6 +254,20 @@ classdef LayerS
                     O2 = Operation('PosLin_approxReachZono');
                 elseif strcmp(reachMethod, 'abs-dom')
                     O2 = Operation('PosLin_approxReachAbsDom');
+                end
+            elseif strcmp(obj.f, 'lrelu')
+                
+                if strcmp(reachMethod, 'exact-star')
+                    O2(obj.N) = Operation;
+                    for i=1:obj.N
+                        O2(i) = Operation('LReLU_stepExactReach', i);
+                    end
+                elseif strcmp(reachMethod, 'approx-star')
+                    O2 = Operation('LReLU_approxReachStar');
+                elseif strcmp(reachMethod, 'approx-zono')
+                    O2 = Operation('LReLU_approxReachZono');
+                elseif strcmp(reachMethod, 'abs-dom')
+                    O2 = Operation('LReLU_approxReachAbsDom');
                 end
                 
             elseif strcmp(obj.f, 'satlin')
