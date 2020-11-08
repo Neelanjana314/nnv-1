@@ -9,21 +9,26 @@ classdef Operation
     %   4) PosLin_approxReachAbsDom
     %   5) PosLin_approxReachStar
     
-    %   6) SatLin_approxReachStar
-    %   7) SatLin_stepExactReach
-    %   8) SatLin_approxReachZono
-    %   9) SatLin_approxReachAbsDom
+    %   6) LReLU_stepExactReach
+    %   7) LReLU_approxReachZono
+    %   8) LReLU_approxReachAbsDom
+    %   9) LReLU_approxReachStar
     
-    %   10) SatLins_stepExactReach
-    %   11) SatLins_approxReachStar
-    %   12) SatLins_approxReachZono
-    %   13) SatLins_approxReachAbsDom
+    %   10) SatLin_approxReachStar
+    %   11) SatLin_stepExactReach
+    %   12) SatLin_approxReachZono
+    %   13) SatLin_approxReachAbsDom
     
-    %   14) LogSig_approxReachZono
-    %   15) LogSig_approxReachStar
+    %   14) SatLins_stepExactReach
+    %   15) SatLins_approxReachStar
+    %   16) SatLins_approxReachZono
+    %   17) SatLins_approxReachAbsDom
     
-    %   16) TanSig_approxReachZono
-    %   17) TanSig_approxReachStar
+    %   18) LogSig_approxReachZono
+    %   19) LogSig_approxReachStar
+    
+    %   20) TanSig_approxReachZono
+    %   21) TanSig_approxReachStar
     
     % The main method for Operation class is: 
     %   2) execute
@@ -59,6 +64,7 @@ classdef Operation
             
             % author: Dung Tran
             % date: 1/18/2020
+            % Modified: Neelanjana: 11/7/2020: added 'lrelu'
             
             switch nargin
                 
@@ -88,7 +94,7 @@ classdef Operation
                     name = varargin{1};
                     index = varargin{2};
                     
-                    if ~strcmp(name, 'PosLin_stepExactReach') && ~strcmp(name, 'SatLin_stepExactReach') && ~strcmp(name, 'SatLins_stepExactReach')   
+                    if ~strcmp(name, 'PosLin_stepExactReach') && ~strcmp(name, 'LReLU_stepExactReach') && ~strcmp(name, 'SatLin_stepExactReach') && ~strcmp(name, 'SatLins_stepExactReach')   
                         error('Unknown operation name');
                     end
                     
@@ -104,12 +110,13 @@ classdef Operation
                     name = varargin{1};
                     
                     S1 = ~strcmp(name, 'PosLin_approxReachStar') && ~strcmp(name, 'PosLin_approxReachZono') && ~strcmp(name, 'PosLin_approxReachAbsDom');
-                    S2 = ~strcmp(name, 'SatLin_approxReachStar') && ~strcmp(name, 'SatLin_approxReachZono') && ~strcmp(name, 'SatLin_approxReachAbsDom');
-                    S3 = ~strcmp(name, 'SatLins_approxReachStar') && ~strcmp(name, 'SatLins_approxReachZono') && ~strcmp(name, 'SatLins_approxReachAbsDom');
-                    S4 = ~strcmp(name, 'LogSig_approxReachStar')&& ~strcmp(name, 'LogSig_approxReachZono');
-                    S5 = ~strcmp(name, 'TanSig_approxReachStar')&& ~strcmp(name, 'TanSig_approxReachZono');
+                    S2 = ~strcmp(name, 'LReLU_approxReachStar') && ~strcmp(name, 'LReLU_approxReachZono') && ~strcmp(name, 'LReLU_approxReachAbsDom');
+                    S3 = ~strcmp(name, 'SatLin_approxReachStar') && ~strcmp(name, 'SatLin_approxReachZono') && ~strcmp(name, 'SatLin_approxReachAbsDom');
+                    S4 = ~strcmp(name, 'SatLins_approxReachStar') && ~strcmp(name, 'SatLins_approxReachZono') && ~strcmp(name, 'SatLins_approxReachAbsDom');
+                    S5 = ~strcmp(name, 'LogSig_approxReachStar')&& ~strcmp(name, 'LogSig_approxReachZono');
+                    S6 = ~strcmp(name, 'TanSig_approxReachStar')&& ~strcmp(name, 'TanSig_approxReachZono');
                     
-                    if  S1 && S2 && S3 && S4 && S5
+                    if  S1 && S2 && S3 && S4 && S5 && S6
                         error('Unknown operation name');
                     end
                     
@@ -134,7 +141,7 @@ classdef Operation
             
             % author: Dung Tran
             % date: 1/18/2020
-                        
+            % Modified: Neelanjana: 11/7/2020: added 'lrelu'            
                         
             if strcmp(obj.Name, 'AffineMap')
                 S = I.affineMap(obj.map_mat, obj.map_vec);
@@ -148,6 +155,16 @@ classdef Operation
                 S = PosLin.reach_zono_approx(I);
             elseif strcmp(obj.Name, 'PosLin_approxReachAbsDom')
                 S = PosLin.reach_abstract_domain(I);
+            % leakyRelu
+            elseif strcmp(obj.Name, 'LReLU_stepExactReach')
+                [xmin, xmax] = I.estimateRange(obj.index); 
+                S = LReLU.stepReach(I, obj.index, xmin, xmax);
+            elseif strcmp(obj.Name, 'LReLU_approxReachStar')
+                S = LReLU.reach_star_approx2(I);
+            elseif strcmp(obj.Name, 'LReLU_approxReachZono')
+                S = LReLU.reach_zono_approx(I);
+            elseif strcmp(obj.Name, 'LReLU_approxReachAbsDom')
+                S = LReLU.reach_abstract_domain(I);
             % SatLin
             elseif strcmp(obj.Name, 'SatLin_stepExactReach')
                 S = SatLin.stepReach(I, obj.index);
