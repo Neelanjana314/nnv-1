@@ -293,8 +293,6 @@ classdef PosLin
             
         end      
         
-                
-        
         % exact reachability analysis using star
         function S = reach_star_exact(varargin)
             % @I: star input sets
@@ -485,8 +483,6 @@ classdef PosLin
                  error('Unknown computation option');
              end
         end
-              
-        
         
         % step reach approximation using star
         function S = stepReachStarApprox(I, index)
@@ -543,9 +539,15 @@ classdef PosLin
                     new_d = [d0; d1; d2; d3];
                     new_V = [I.V zeros(I.dim, 1)];
                     new_V(index, :) = zeros(1, n+1);
-                    new_V(index, n+1) = 1;              
-                    new_predicate_lb = [I.predicate_lb; 0];                
-                    new_predicate_ub = [I.predicate_ub; ub];
+                    new_V(index, n+1) = 1;
+                    if isempty(I.predicate_lb) || isempty(I.predicate_ub)
+                        [pred_lb, pred_ub] = I.getPredicateBounds;
+                    else
+                        pred_lb = I.predicate_lb;
+                        pred_ub = I.predicate_ub;
+                    end
+                    new_predicate_lb = [pred_lb; 0];                
+                    new_predicate_ub = [pred_ub; ub];
 
                     % update outer-zono
 
@@ -569,7 +571,6 @@ classdef PosLin
             end
 
         end
-        
         
         % over-approximate reachability analysis using Star
         function S = reach_star_approx(I)
@@ -615,7 +616,6 @@ classdef PosLin
             end
 
         end
-        
         
         % step reach approximation using star
         function S = multipleStepReachStarApprox_at_one(I, index, lb, ub)
@@ -1903,20 +1903,27 @@ classdef PosLin
                 new_V = [I.V zeros(I.dim, 1)];
                 new_V(index, :) = zeros(1, n+1);
                 new_V(index, n+1) = 1;
+               
+                if isempty(I.predicate_lb) || isempty(I.predicate_ub)
+                    [pred_lb, pred_ub] = I.getPredicateBounds;
+                else
+                    pred_lb = I.predicate_lb;
+                    pred_ub = I.predicate_ub;
+                end
                 
                 if S1 < S2
                     % get first cadidate as resulted abstract-domain
                     new_C = [C0; C1; C3];
                     new_d = [d0; d1; d3];
-                    new_pred_lb = [I.predicate_lb; 0];
-                    new_pred_ub = [I.predicate_ub; ub];
+                    new_pred_lb = [pred_lb; 0];
+                    new_pred_ub = [pred_ub; ub];
                     
                 else
                     % choose the second candidate as the abstract-domain                                      
                     new_C = [C0; C2; C3];
                     new_d = [d0; d2; d3];
-                    new_pred_lb = [I.predicate_lb; lb];
-                    new_pred_ub = [I.predicate_ub; ub];
+                    new_pred_lb = [pred_lb; lb];
+                    new_pred_ub = [pred_ub; ub];
                                         
                 end
                 
@@ -1965,6 +1972,7 @@ classdef PosLin
                     V = I.V;
                     V(map, :) = 0;
                     In = Star(V, I.C, I.d, I.predicate_lb, I.predicate_ub);                    
+                   
                     map = find(lb <= 0 & ub > 0);
                     m = length(map); 
                     for i=1:m
