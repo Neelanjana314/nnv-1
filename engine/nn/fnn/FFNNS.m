@@ -121,7 +121,7 @@ classdef FFNNS < handle
             b = 1; 
             for i=1:obj.nL
                 f = obj.Layers(i).f;                
-                if ~strcmp(f, 'poslin') && ~strcmp(f, 'purelin') && ~strcmp(f, 'satlin') && ~strcmp(f, 'satlins')
+                if ~strcmp(f, 'lrelu') && ~strcmp(f, 'poslin') && ~strcmp(f, 'purelin') && ~strcmp(f, 'satlin') && ~strcmp(f, 'satlins')
                     b = 0;
                     return;
                 end
@@ -1820,7 +1820,6 @@ classdef FFNNS < handle
                     error('Invalid number of inputs, should be 2, 3, or 4');
                      
             end
-            
             if correct_id > obj.nO || correct_id < 1
                 error('Invalid correct id');
             end
@@ -1843,28 +1842,28 @@ classdef FFNNS < handle
                 incorrect_id_list = [incorrect_id_list id1];             
                 
                 % construct counter example set
-                if ~isempty(id1)
-                    
-                    if ~isa(in_image, 'Star')
-                        
-                        counterExamples = in_image; 
-                    
-                    elseif strcmp(method, 'exact-star') && obj.isPieceWiseNetwork
-                        
-                        rs = obj.outputSet(i);
-                        rs = rs.toImageStar(rs.dim, 1, 1);
-                        
-                        L = length(id1); 
-                        for l=1:L
-                            
-                            [new_C, new_d] = ImageStar.addConstraint(rs, [1, 1, correct_id], [1, 1, id1(l)]);  
-                            counter_IS = ImageStar(im1.V, new_C, new_d, im1.pred_lb, im1.pred_ub);
-                            counterExamples = [counterExamples counter_IS.toStar];
-                        end
-                        
-                    end
-   
-                end
+%                 if ~isempty(id1)
+%                     
+%                     if ~isa(in_image, 'Star')
+%                         
+%                         counterExamples = in_image; 
+%                     
+%                     elseif strcmp(method, 'exact-star') && obj.isPieceWiseNetwork
+%                         
+%                         rs = obj.outputSet(i);
+%                         rs = rs.toImageStar(rs.dim, 1, 1);
+%                         
+%                         L = length(id1); 
+%                         for l=1:L
+%                             
+%                             [new_C, new_d] = ImageStar.addConstraint(rs, [1, 1, correct_id], [1, 1, id1(l)]);  
+%                             counter_IS = ImageStar(im1.V, new_C, new_d, im1.pred_lb, im1.pred_ub);
+%                             counterExamples = [counterExamples counter_IS.toStar];
+%                         end
+%                         
+%                     end
+%    
+%                 end
       
             end
             
@@ -2261,9 +2260,29 @@ classdef FFNNS < handle
                         end
                     end
                 end
-                
             end
-                        
+            if strcmp(method, 'exact-star')
+                % compute reachable set
+                if numOfCores > 1
+                    parfor i=1:N
+                        [rb,~] = obj.verifyRobustness(in_images(i), correct_ids(i), method);
+                        if rb == 1
+                            count(i) = 1;
+                        else
+                            count(i) = 0;
+                        end
+                    end
+                else
+                    for i=1:N
+                        [rb,~] = obj.verifyRobustness(in_images(i), correct_ids(i), method);
+                        if rb == 1
+                            count(i) = 1;
+                        else
+                            count(i) = 0;
+                        end
+                    end
+                end
+            end
             r = sum(count)/N; 
             
         end      
