@@ -46,15 +46,14 @@ classdef LReLU
             if xmin >= 0
                 S = I;
             elseif xmax <= 0
-                %S = alpha*I;
                 V = I.V;
                 V(index, :) = alpha*V(index, :);
                 
                 if ~isempty(I.Z)
                     c1= I.Z.c;
-                    %c1(index) = 0;
                     V1 = I.Z.V;
                     V1(index, :) = alpha*V1(index, :);
+                    c1(index, :) = alpha*c1(index, :);
                     new_Z = Zono(c1, V1); % update outer-zono
                 else
                     new_Z = [];
@@ -73,9 +72,9 @@ classdef LReLU
                 %update outer -zono
                 if ~isempty(I.Z)
                     c1 = I.Z.c;
-                    %c1(index) = alpha*c1(index);
                     V1 = I.Z.V;
                     V1(index,:) = alpha*V1(index,:);
+                    c1(index) = alpha*c1(index);
                     new_Z = Zono(c1, V1);
                 else
                     new_Z = [];
@@ -161,9 +160,9 @@ classdef LReLU
                     % update outer-zono
                     if ~isempty(I.Z)
                         c1 = I.Z.c;
-                        %c1(map, :) = 0;
                         V1 = I.Z.V;
                         V1(map, :) = alpha*V1(map, :);
+                        c1(map,:) = alpha*c1(map,:);
                         new_Z = Zono(c1, V1);
                     else
                         new_Z = [];
@@ -174,7 +173,7 @@ classdef LReLU
                     m = length(map);                    
                     for i=1:m
                         if strcmp(dis_opt, 'display')
-                            fprintf('\nPerforming exact PosLin_%d operation using Star', map(i));
+                            fprintf('\nPerforming exact LReLU_%d operation using Star', map(i));
                         end
                         In = LReLU.stepReachMultipleInputs(In, map(i), option, lp_solver);
                     end               
@@ -240,7 +239,7 @@ classdef LReLU
                     V(index, :) = alpha*V(index, :);
                     if ~isempty(I.Z)
                         c1= I.Z.c;
-                        %c1(index) = 0;
+                        c1(index) = alpha*c1(index);
                         V1 = I.Z.V;
                         V1(index, :) = alpha*V1(index, :);
                         new_Z = Zono(c1, V1); % update outer-zono
@@ -254,7 +253,7 @@ classdef LReLU
                     % over-approximation constraints 
                     % constraint 1: y[index] >= alpha*x[index]
                     C1 = [alpha*I.V(index, 2:n) -1];
-                    d1 = -I.V(index, 1);
+                    d1 = -alpha*I.V(index, 1);
                     % constraint 2: y[index] >= x[index]
                     C2 = [I.V(index, 2:n) -1];
                     d2 = -I.V(index, 1);
@@ -277,7 +276,7 @@ classdef LReLU
                         pred_lb = I.predicate_lb;
                         pred_ub = I.predicate_ub;
                     end
-                    new_predicate_lb = [pred_lb; 0];                
+                    new_predicate_lb = [pred_lb; alpha*lb];                
                     new_predicate_ub = [pred_ub; ub];
                     
                     % update outer-zono
@@ -324,7 +323,7 @@ classdef LReLU
                     % update outer-zono
                     if ~isempty(I.Z)
                         c1 = I.Z.c;
-                        %c1(map, :) = 0;
+                        c1(map, :) = alpha*c1(map,:);
                         V1 = I.Z.V;
                         V1(map, :) = alpha*V1(map, :);
                         new_Z = Zono(c1, V1);
@@ -356,6 +355,7 @@ classdef LReLU
             % construct new basis array
             V1 = I.V; % originial basis array
             V1(index, :) = 0;
+            
             V2 = zeros(N, m); % basis array for new predicates
             for i=1:m
                 V2(index(i), i) = 1;
@@ -372,7 +372,7 @@ classdef LReLU
             
             % case 1: y[index] >= alpha*x[index]
             C1 = [alpha*I.V(index, 2:n+1) -V2(index, 1:m)];
-            d1 = -I.V(index, 1);
+            d1 = -alpha*I.V(index, 1);
             
             %case 2: y(index) >= x(index)
             C2 = [I.V(index, 2:n+1) -V2(index, 1:m)];
@@ -387,7 +387,7 @@ classdef LReLU
             new_C = [C0; C1; C2; C3];
             new_d = [d0; d1; d2; d3];
             
-            new_pred_lb = [I.predicate_lb; zeros(m,1)];
+            new_pred_lb = [I.predicate_lb; alpha*lb]; %zeros(m,1)
             new_pred_ub = [I.predicate_ub; ub];
             
             S = Star(new_V, new_C, new_d, new_pred_lb, new_pred_ub);
@@ -462,9 +462,9 @@ classdef LReLU
                     % update outer-zono
                     if ~isempty(I.Z)
                         c1 = I.Z.c;
-                        %c1(map, :) = 0;
                         V1 = I.Z.V;
                         V1(map11, :) = alpha*V1(map11, :);
+                        c1(map11,:) = alpha*c1(map11,:);
                         new_Z = Zono(c1, V1);
                     else
                         new_Z = [];
@@ -525,7 +525,7 @@ classdef LReLU
                 
                 Im = eye(dim);
                 Im(index, index) = alpha*Im(index,index);
-                R1 = Im*R1
+                R1 = Im*R1;
                 if R1.isEmptySet 
                     if R2.isEmptySet
                         R = [];
@@ -631,7 +631,7 @@ classdef LReLU
                 Z = Zono(I.c, I.V);
             elseif ub <= 0
                 c = I.c;
-                %c(index) = 0;
+                c(index) = alpha*c(index);
                 V = I.V;
                 V(index, :) = alpha*V(index, :);
                 Z = Zono(c, V);
@@ -757,7 +757,7 @@ classdef LReLU
                     % choose the second candidate as the abstract-domain                                      
                     new_C = [C0; C2; C3];
                     new_d = [d0; d2; d3];
-                    new_pred_lb = [pred_lb; lb];
+                    new_pred_lb = [pred_lb; alpha*lb];
                     new_pred_ub = [pred_ub; ub];
                 end
                 
@@ -797,7 +797,7 @@ classdef LReLU
                     % update outer-zono
                     if ~isempty(I.Z)
                         c1 = I.Z.c;
-                        %c1(map, :) = 0;
+                        c1(map, :) = alpha*c1(map,:);
                         V1 = I.Z.V;
                         V1(map, :) = alpha*V1(map, :);
                         new_Z = Zono(c1, V1);
@@ -810,7 +810,7 @@ classdef LReLU
                     m = length(map);                    
                     for i=1:m
                         if strcmp(dis_opt, 'display')
-                            fprintf('\nPerforming exact PosLin_%d operation using Abstract Domain', map(i));
+                            fprintf('\nPerforming exact LReLU_%d operation using Abstract Domain', map(i));
                         end
                         In = LReLU.stepReachAbstractDomain(In, map(i), lb(map(i)), ub(map(i)));
                     end               
@@ -829,9 +829,9 @@ classdef LReLU
             % @option: = 'parallel' use parallel option
             %          = '' do use parallel option
             
-            % author: Dung Tran
-            % date: 27/2/2019
-            % update: 7/15/2020: add display option
+            % Framework: Dung Tran
+            % Author: Neelanjana Pal 11/7/2020
+            
             
             switch nargin
                 
@@ -890,6 +890,7 @@ classdef LReLU
             elseif strcmp(method, 'exact-polyhedron') % exact analysis using polyhedron
                 R = LReLU.reach_polyhedron_exact(I, option, dis_opt);
             elseif strcmp(method, 'approx-star')  % over-approximate analysis using star
+%                 R = LReLU.reach_star_approx(I);
                 R = LReLU.reach_star_approx2(I, option, dis_opt, lp_solver);
 %             elseif strcmp(method, 'relax-star-dis')
 %                 R = LReLU.reach_relaxed_star_dis(I, relaxFactor, option, dis_opt, lp_solver);
