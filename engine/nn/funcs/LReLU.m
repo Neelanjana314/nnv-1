@@ -725,7 +725,7 @@ classdef LReLU
                 
                 % constraint 1: y[index] >= alpha*x[index]
                 C1 = [alpha*I.V(index, 2:n) -1];
-                d1 = -I.V(index, 1);
+                d1 = -alpha*I.V(index, 1);
                 % constraint 2: y[index] >= x[index]
                 C2 = [I.V(index, 2:n) -1];
                 d2 = -I.V(index, 1);
